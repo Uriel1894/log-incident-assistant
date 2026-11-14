@@ -4,19 +4,15 @@ from collections import Counter
 def mask_ips(text):
     return re.sub(r"\b\d{1,3}(\.\d{1,3}){3}\b", "x.x.x.x", text)
 
-if len(sys.argv) != 2:
-    print("Usage: python3 preprocess.py <logfile>",file=sys.stderr)
-    sys.exit(2)
 
-requests_number = 0
-code_number = Counter()
-client_set = set()
-url_errors = Counter()
-error_times = []
-sample_lines = []
-
-try:
-    with open(sys.argv[1]) as f:
+def summarize(path):
+    requests_number = 0
+    code_number = Counter()
+    client_set = set()
+    url_errors = Counter()
+    error_times = []
+    sample_lines = []
+    with open(path) as f:
         for line in f:
             parts = line.split()
             if len(parts) < 9:
@@ -29,20 +25,32 @@ try:
                 client_set.add(parts[0])
                 error_times.append(parts[3].lstrip("["))
                 sample_lines.append(line.strip())
-except FileNotFoundError:
-    print(f"File not found: {sys.argv[1]}",file=sys.stderr)
-    sys.exit(1)
 
-print(f"Total requests: {requests_number}")
-print(f"Status: 2xx={code_number['2xx']}, 4xx={code_number['4xx']}, 5xx={code_number['5xx']}")
-if error_times:
-    print(f"5xx window: {error_times[0]} -> {error_times[-1]}")
-else:
-    print("5xx window: none")
-print("Top URLs with 5xx:")
-for url, count in url_errors.most_common(5):
-    print(f"  {url} {count}")
-print(f"Distinct clients affected: {len(client_set)}")
-print("Sample error lines:")
-for sample in sample_lines[:3]:
-    print("  " + mask_ips(sample))
+    lines = []
+    lines.append(f"Total requests: {requests_number}")
+    lines.append(f"Status: 2xx={code_number['2xx']}, 4xx={code_number['4xx']}, 5xx={code_number['5xx']}")
+    if error_times:
+        lines.append(f"5xx window: {error_times[0]} -> {error_times[-1]}")
+    else:
+        lines.append("5xx window: none")
+    lines.append("Top URLs with 5xx:")
+    for url, count in url_errors.most_common(5):
+        lines.append(f"  {url} {count}")
+    lines.append(f"Distinct clients affected: {len(client_set)}")
+    lines.append("Sample error lines:")
+    for sample in sample_lines[:3]:
+        lines.append("  " + mask_ips(sample))
+
+    return "\n".join(lines)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python3 preprocess.py <logfile>",file=sys.stderr)
+        sys.exit(2)
+
+    try:
+        print(summarize(sys.argv[1]))
+    except FileNotFoundError:
+        print(f"File not found: {sys.argv[1]}", file=sys.stderr)
+        sys.exit(1)
