@@ -10,6 +10,7 @@ def summarize(path):
     code_number = Counter()
     client_set = set()
     url_errors = Counter()
+    error_codes = Counter()
     error_times = []
     sample_lines = []
     with open(path) as f:
@@ -21,6 +22,7 @@ def summarize(path):
             http_code = parts[8]
             code_number[http_code[0] + "xx"] += 1
             if http_code[0] == "5":
+                error_codes[http_code] += 1
                 url_errors[parts[6]] += 1
                 client_set.add(parts[0])
                 error_times.append(parts[3].lstrip("["))
@@ -29,6 +31,10 @@ def summarize(path):
     lines = []
     lines.append(f"Total requests: {requests_number}")
     lines.append(f"Status: 2xx={code_number['2xx']}, 4xx={code_number['4xx']}, 5xx={code_number['5xx']}")
+    code_parts = []
+    for code, count in sorted(error_codes.items()):
+        code_parts.append(f"{code}={count}")
+    lines.append(f"5xx codes: {', '.join(code_parts)}")
     if error_times:
         lines.append(f"5xx window: {error_times[0]} -> {error_times[-1]}")
     else:

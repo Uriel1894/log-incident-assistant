@@ -24,9 +24,9 @@ if __name__ == "__main__":
         sys.exit(1)
     try:
         client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
-        response = client.chat.completions.create(model=MODEL, messages=[
+        response = client.chat.completions.create(model=MODEL, temperature=0, seed=42, messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": f"Here is the log summary:\n\n{summary}"}
+            {"role": "user", "content": f"Summary of NGINX access logs:\n\n{summary}"}
         ])
     except APIConnectionError:
         print("Cannot reach Ollama. Is it running? (sudo systemctl start ollama)", file=sys.stderr)
@@ -40,6 +40,3 @@ if __name__ == "__main__":
         f.write("```\n\n")
         f.write(analysis + "\n")
     print("Report written to report.md")
-    # 3. appeler le LLM dans un try / except APIConnectionError (message + code 1)
-    # 4. écrire report.md : l'avertissement, le résumé, l'analyse
-    # 5. print("Report written to report.md")
